@@ -12,7 +12,7 @@ def add_item_to_slot(db: Session, slot_id: str, data: ItemCreate) -> Item:
         raise ValueError("slot_not_found")
     if slot.current_item_count + data.quantity > slot.capacity:
         raise ValueError("capacity_exceeded")
-    if slot.current_item_count + data.quantity < settings.MAX_ITEMS_PER_SLOT:
+    if slot.current_item_count + data.quantity > settings.MAX_ITEMS_PER_SLOT:
         raise ValueError("capacity_exceeded")
     item = Item(
         name=data.name,
@@ -37,6 +37,8 @@ def bulk_add_items(db: Session, slot_id: str, entries: list[ItemBulkEntry]) -> i
             continue
         item = Item(name=e.name, price=e.price, slot_id=slot_id, quantity=e.quantity)
         db.add(item)
+        slot.current_item_count += e.quantity
+
         added += 1
         db.commit()
         time.sleep(0.05)  # demo: widens race window vs purchase
